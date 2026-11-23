@@ -18,8 +18,9 @@ type Playback struct {
 	// ExpiresAt 是流 URL 失效的时间，单位是 unix 秒。
 	ExpiresAt int64 `json:"expires_at,omitempty"`
 	// Protected 标记加密的分集；参见 Stream.Protected。
-	Protected bool     `json:"protected"`
-	Streams   []Stream `json:"streams"`
+	Protected          bool     `json:"protected"`
+	Streams            []Stream `json:"streams"`
+	AvailableQualities []int    `json:"available_qualities,omitempty"`
 	// AudioURL 是分段（DASH）作品（如长片电影）的独立音轨。
 	// 单文件的表示形式留空。
 	AudioURL string `json:"audio_url,omitempty"`

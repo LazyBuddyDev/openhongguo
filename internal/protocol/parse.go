@@ -748,6 +748,16 @@ func parseSeriesPayload(payload wireSeriesPayload) (*model.Series, []model.Episo
 // Keys and per-segment check data are used only to set Protected; they are
 // never copied into the returned model.
 func ParsePlayback(raw []byte, episodeID string) (*model.Playback, error) {
+	return parsePlayback(raw, episodeID, "")
+}
+
+// ParsePlaybackForQuality keeps the selected representation and its own wrapped
+// material together; ByteVC2 is not an input supported by BriefDock's MP4 adapter.
+func ParsePlaybackForQuality(raw []byte, episodeID, quality string) (*model.Playback, error) {
+	return parsePlayback(raw, episodeID, quality)
+}
+
+func parsePlayback(raw []byte, episodeID, quality string) (*model.Playback, error) {
 	var env struct {
 		Code    flexString `json:"code"`
 		Message string     `json:"message"`
@@ -808,13 +818,73 @@ func ParsePlayback(raw []byte, episodeID string) (*model.Playback, error) {
 			}
 		}
 	}
+	var available []int
+	if quality != "" {
+		wanted, _ := strconv.Atoi(strings.TrimSuffix(quality, "p"))
+		var selected *playbackItem
+		selectedSize := 0
+		var lower *playbackItem
+		lowerSize := 0
+		for i := range items {
+			candidate := items[i].stream()
+			matches := strings.EqualFold(candidate.Definition, quality) || strings.EqualFold(candidate.Quality, quality)
+			size := min(candidate.Width, candidate.Height)
+			if size > 0 {
+				matches = wanted > 0 && size >= wanted
+			} else {
+				size = wanted
+			}
+			switch strings.ToLower(candidate.Codec) {
+			case "", "bytevc1", "hevc", "h265", "h264", "avc", "avc1", "hvc1", "hev1":
+			default:
+				continue
+			}
+			if candidate.HLS || candidate.Dash || candidate.URL == "" {
+				continue
+			}
+			if size == 360 || size == 480 || size == 720 || size == 1080 {
+				found := false
+				for _, v := range available {
+					if v == size {
+						found = true
+						break
+					}
+				}
+				if !found {
+					available = append(available, size)
+				}
+			}
+			if !matches {
+				if size > 0 && size < wanted && (lower == nil || size > lowerSize || (size == lowerSize && candidate.Bitrate < lower.stream().Bitrate)) {
+					lower, lowerSize = &items[i], size
+				}
+				continue
+			}
+			if selected == nil || size < selectedSize || (size == selectedSize && candidate.Bitrate < selected.stream().Bitrate) {
+				selected = &items[i]
+				selectedSize = size
+			}
+		}
+		// A saved preference must not prevent playback of an episode with lower available quality.
+		if selected == nil {
+			selected, selectedSize = lower, lowerSize
+		}
+		if selected == nil {
+			return nil, fmt.Errorf("quality_unavailable")
+		}
+		actual := strconv.Itoa(selectedSize) + "p"
+		selected.Meta.Definition, selected.Definition = actual, actual
+		items = []playbackItem{*selected}
+		sort.Ints(available)
+	}
 	out := &model.Playback{
-		EpisodeID:       episodeID,
-		VideoID:         video.VideoID.String(),
-		MediaType:       strings.TrimSpace(video.MediaType),
-		DurationSeconds: int(video.Duration + 0.5),
-		ExpiresAt:       int64(video.URLExpire),
-		Streams:         make([]model.Stream, 0, len(items)),
+		EpisodeID:          episodeID,
+		VideoID:            video.VideoID.String(),
+		MediaType:          strings.TrimSpace(video.MediaType),
+		DurationSeconds:    int(video.Duration + 0.5),
+		ExpiresAt:          int64(video.URLExpire),
+		Streams:            make([]model.Stream, 0, len(items)),
+		AvailableQualities: available,
 	}
 	protected := 0
 	for _, item := range items {
