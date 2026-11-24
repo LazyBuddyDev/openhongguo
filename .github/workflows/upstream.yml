@@ -19,7 +19,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      REVIEWED: 015a388112ee148a7d2dfb7ecfafe171bbab957f
+      REVIEWED: cac5dbc0e1150c0f93e309d8de68bb483f50f499
     steps:
       - name: Report new upstream commits
         shell: bash

@@ -28,6 +28,10 @@ SDK 用匿名设备发送所有请求，不需要登录。Go 以外的 SDK 都�
 >
 > 详细的免责声明见[文末](#免责声明)。
 
+## LazyBuddy 分支
+
+本分支保留红果服务所需的定制 SDK。上游审查范围、选择性合入及验证限制见[上游审查记录](docs/upstream-review.md)；审查游标不表示完整升级到该上游版本。
+
 ## 文档
 
 | 文档 | 内容 |
@@ -336,7 +340,7 @@ type Transport interface {
 | Go | 其他语言 | 作用 |
 |---|---|---|
 | `Person` | `person(userId)` | 加载一位演员或一个角色的主页 |
-| `PersonWorks` | `personWorks(userId, cursor)` | 加载一位演员参演的短剧，一次一页（主页上的作品 › 剧作） |
+| `PersonWorks` | `personWorks(userId, cursor)` | 加载一位演员参演的短剧，一次一页（主页上的剧作） |
 
 ### 播放与设备
 

@@ -4,6 +4,8 @@ Source: https://github.com/beilunyang/openhongguo
 
 Commit: `015a388112ee148a7d2dfb7ecfafe171bbab957f` (2026-11-12).
 
+Fork review: upstream changes through `cac5dbc0e1150c0f93e309d8de68bb483f50f499` were reviewed on 2026-11-24. Selected fixes and exclusions are recorded in [docs/upstream-review.md](docs/upstream-review.md). The commit above remains the source baseline; this is not a complete upstream version upgrade. Updating this fork does not update hongguo-service or an installed module.
+
 License: Apache-2.0, retained in LICENSE. Only required SDK sources, the memory profile store and focused BriefDock regression tests are included. Local changes are listed below.
 
 BriefDock supplies its own narrowly scoped transport. Account cookies pass through private pipes only to explicitly allowed video, shelf and watch-progress endpoints. Account-bound device profiles use application memory and separate Windows Credential Manager storage; QA only reads that storage. Retries and automatic device resets are disabled. The upstream SDK is an unofficial client, not an official authorization API. A media model is not proof of successful playback or permission for every episode.
